@@ -1,0 +1,117 @@
+.section {
+  padding: clamp(76px, 8vw, 120px) 0;
+  background: linear-gradient(180deg, #0f1e46 0%, #0a1636 100%);
+}
+
+.layout {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  min-height: clamp(480px, 56vw, 720px);
+}
+
+.text {
+  position: relative;
+  z-index: 2;
+  width: min(62ch, 58%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: clamp(14px, 2vw, 24px);
+  padding-right: clamp(20px, 3.6vw, 56px);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.title {
+  margin: 0;
+  max-width: 16ch;
+  font-family: var(--font-display), var(--font-sans), ui-sans-serif;
+  font-size: clamp(36px, 4.1vw, 62px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.copy {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--accent);
+  font-size: clamp(17px, 1.2vw, 19px);
+  line-height: 1.72;
+}
+
+.imageContainer {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(72%, 940px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.image {
+  object-fit: contain;
+  object-position: right top;
+  transform: translateX(16%);
+  mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 1) 30%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 1) 30%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+}
+
+@media (max-width: 960px) {
+  .layout {
+    display: grid;
+    min-height: 0;
+    gap: 20px;
+  }
+
+  .text {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 0;
+  }
+
+  .title {
+    max-width: 100%;
+    font-size: clamp(32px, 8.5vw, 46px);
+  }
+
+  .copy {
+    font-size: 16px;
+    line-height: 1.66;
+  }
+
+  .imageContainer {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    min-height: clamp(280px, 60vw, 420px);
+    pointer-events: auto;
+  }
+
+  .image {
+    object-position: center top;
+    transform: none;
+  }
+}
