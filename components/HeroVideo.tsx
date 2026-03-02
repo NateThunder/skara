@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type HeroVideoProps = {
   src: string;
@@ -10,6 +10,32 @@ type HeroVideoProps = {
 export default function HeroVideo({ src, poster }: HeroVideoProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [muted, setMuted] = useState(true);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const tryAutoplay = () => {
+      video.muted = true;
+      video.defaultMuted = true;
+      void video.play().catch(() => {});
+    };
+
+    tryAutoplay();
+    video.addEventListener("loadedmetadata", tryAutoplay);
+    video.addEventListener("canplay", tryAutoplay);
+
+    const onVisibilityChange = () => {
+      if (!document.hidden) tryAutoplay();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", tryAutoplay);
+      video.removeEventListener("canplay", tryAutoplay);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
 
   function toggleMute() {
     const video = videoRef.current;
