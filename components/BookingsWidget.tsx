@@ -1,113 +1,73 @@
 "use client";
 
-import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
+import type { FormEvent } from "react";
 
-type AvailabilityData = {
-  timezone?: string;
-  booked: string[];
-  notes?: Record<string, string>;
-};
+import BookingsCalendar from "@/components/bookings/BookingsCalendar";
+import BookingsEnquiryForm from "@/components/bookings/BookingsEnquiryForm";
+import {
+  INITIAL_FORM_STATE,
+  MONTH_OFFSET_MAX,
+  MONTH_OFFSET_MIN,
+} from "@/components/bookings/constants";
+import { buildBookingMailto } from "@/components/bookings/buildMailto";
+import {
+  addMonthsLocal,
+  getMonthGrid,
+  parseISODateLocal,
+  startOfTodayLocal,
+} from "@/components/bookings/dateUtils";
+import type { AvailabilityData, BookingFormState } from "@/components/bookings/types";
 
 type BookingsWidgetProps = {
   availability: AvailabilityData;
 };
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
-
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-function formatISODateLocal(date: Date) {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
-    date.getDate(),
-  )}`;
-}
-
-function parseISODateLocal(iso: string) {
-  const [y, m, d] = iso.split("-").map((v) => Number(v));
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-}
-
-function startOfTodayLocal() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
-function addMonthsLocal(base: Date, months: number) {
-  return new Date(base.getFullYear(), base.getMonth() + months, 1);
-}
-
-function monthLabel(date: Date) {
-  return date.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-}
-
-function getMonthGrid(date: Date) {
-  const year = date.getFullYear();
-  const monthIndex = date.getMonth();
-  const firstOfMonth = new Date(year, monthIndex, 1);
-  const firstWeekdayMonday0 = (firstOfMonth.getDay() + 6) % 7;
-  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-
-  const cells: Array<Date | null> = [];
-  for (let i = 0; i < firstWeekdayMonday0; i += 1) cells.push(null);
-  for (let day = 1; day <= daysInMonth; day += 1)
-    cells.push(new Date(year, monthIndex, day));
-
-  const remainder = cells.length % 7;
-  if (remainder !== 0) {
-    for (let i = 0; i < 7 - remainder; i += 1) cells.push(null);
-  }
-
-  return cells;
-}
-
 export default function BookingsWidget({ availability }: BookingsWidgetProps) {
-  const bookedSet = useMemo(() => new Set(availability.booked), [availability]);
+  const bookedSet = useMemo(
+    () => new Set(availability.booked),
+    [availability.booked],
+  );
   const notes = availability.notes ?? {};
   const today = useMemo(() => startOfTodayLocal(), []);
 
   const [monthOffset, setMonthOffset] = useState(0);
   const [selectedISO, setSelectedISO] = useState<string>("");
   const [notice, setNotice] = useState<string | null>(null);
+  const [form, setForm] = useState<BookingFormState>(INITIAL_FORM_STATE);
 
-  const viewBase = useMemo(
-    () => addMonthsLocal(today, monthOffset),
-    [today, monthOffset],
-  );
-  const viewMonths = useMemo(
-    () => [viewBase, addMonthsLocal(viewBase, 1)],
-    [viewBase],
-  );
+  const viewMonths = useMemo(() => {
+    const first = addMonthsLocal(today, monthOffset);
+    return [first, addMonthsLocal(first, 1)];
+  }, [today, monthOffset]);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [eventType, setEventType] = useState("");
-  const [location, setLocation] = useState("");
-  const [message, setMessage] = useState("");
-
-  const selectedDate = useMemo(
-    () => (selectedISO ? parseISODateLocal(selectedISO) : null),
-    [selectedISO],
+  const monthViews = useMemo(
+    () =>
+      viewMonths.map((month) => ({
+        month,
+        cells: getMonthGrid(month),
+      })),
+    [viewMonths],
   );
 
-  function isPastISO(iso: string) {
-    const date = parseISODateLocal(iso);
-    if (!date) return false;
-    return date.getTime() < today.getTime();
-  }
+  const selectedDate = selectedISO ? parseISODateLocal(selectedISO) : null;
 
   function chooseDate(iso: string) {
+    const date = parseISODateLocal(iso);
+    if (!date) {
+      return;
+    }
+
     if (bookedSet.has(iso)) {
       setNotice("That date is marked as booked. Please choose another.");
       return;
     }
-    if (isPastISO(iso)) {
+
+    if (date.getTime() < today.getTime()) {
       setNotice("Please choose a future date.");
       return;
     }
+
     setNotice(null);
     setSelectedISO(iso);
   }
@@ -117,233 +77,53 @@ export default function BookingsWidget({ availability }: BookingsWidgetProps) {
       setSelectedISO("");
       return;
     }
+
     chooseDate(next);
   }
 
-  function buildMailto() {
-    const subject = `Skara booking enquiry — ${selectedISO || "Date TBC"}`;
-    const lines = [
-      `Name: ${name || "—"}`,
-      `Email: ${email || "—"}`,
-      `Date: ${selectedISO || "—"}`,
-      `Event type: ${eventType || "—"}`,
-      `Location: ${location || "—"}`,
-      "",
-      "Details:",
-      message || "—",
-    ];
-
-    const body = lines.join("\n");
-    return `mailto:info@skaraceilidh.com?subject=${encodeURIComponent(
-      subject,
-    )}&body=${encodeURIComponent(body)}`;
+  function updateField(key: keyof BookingFormState, value: string) {
+    setForm((prev) => (prev[key] === value ? prev : { ...prev, [key]: value }));
   }
 
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || !email.trim() || !selectedISO) {
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!form.name.trim() || !form.email.trim() || !selectedISO) {
       setNotice("Add your name, email, and pick a date to send an enquiry.");
       return;
     }
+
     setNotice(null);
-    window.location.href = buildMailto();
+    window.location.href = buildBookingMailto(form, selectedISO);
+  }
+
+  function shiftMonth(delta: -1 | 1) {
+    setMonthOffset((offset) =>
+      Math.min(MONTH_OFFSET_MAX, Math.max(MONTH_OFFSET_MIN, offset + delta)),
+    );
   }
 
   return (
     <div className="bookingGrid">
-      <div className="calendarShell" aria-label="Availability calendar">
-        <div className="calendarTop">
-          <div className="legend" aria-label="Legend">
-            <span className="legendItem">
-              <span className="legendSwatch legendAvailable" aria-hidden="true" />
-              Available
-            </span>
-            <span className="legendItem">
-              <span className="legendSwatch legendBooked" aria-hidden="true" />
-              Booked
-            </span>
-          </div>
+      <BookingsCalendar
+        monthViews={monthViews}
+        timezone={availability.timezone}
+        notes={notes}
+        bookedSet={bookedSet}
+        selectedISO={selectedISO}
+        today={today}
+        onShiftMonth={shiftMonth}
+        onChooseDate={chooseDate}
+      />
 
-          <div className="calNav" aria-label="Month navigation">
-            <button
-              type="button"
-              className="calNavBtn"
-              onClick={() => setMonthOffset((v) => Math.max(-1, v - 1))}
-              aria-label="Previous month"
-            >
-              Prev
-            </button>
-            <button
-              type="button"
-              className="calNavBtn"
-              onClick={() => setMonthOffset((v) => Math.min(12, v + 1))}
-              aria-label="Next month"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-
-        <div className="months">
-          {viewMonths.map((m) => (
-            <div key={`${m.getFullYear()}-${m.getMonth()}`} className="month">
-              <div className="monthHeader">
-                <p className="monthTitle">{monthLabel(m)}</p>
-                <p className="monthHint">
-                  {availability.timezone ? `Times: ${availability.timezone}` : ""}
-                </p>
-              </div>
-
-              <div className="weekdayRow" aria-hidden="true">
-                {WEEKDAYS.map((d) => (
-                  <div key={d} className="weekdayCell">
-                    {d}
-                  </div>
-                ))}
-              </div>
-
-              <div className="calGrid" role="grid">
-                {getMonthGrid(m).map((cell, idx) => {
-                  if (!cell)
-                    return <div key={`e-${idx}`} className="calCell empty" />;
-
-                  const iso = formatISODateLocal(cell);
-                  const booked = bookedSet.has(iso);
-                  const past = cell.getTime() < today.getTime();
-                  const selected = iso === selectedISO;
-                  const disabled = booked || past;
-                  const note = notes[iso];
-
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      className={[
-                        "calCell",
-                        booked ? "booked" : "available",
-                        selected ? "selected" : "",
-                      ].join(" ")}
-                      onClick={() => chooseDate(iso)}
-                      disabled={disabled}
-                      aria-pressed={selected}
-                      aria-label={
-                        note
-                          ? `${iso} (${booked ? "Booked" : "Available"}: ${note})`
-                          : `${iso} (${booked ? "Booked" : "Available"})`
-                      }
-                      title={note ? `${note}` : undefined}
-                    >
-                      <span className="dayNum">{cell.getDate()}</span>
-                      {booked ? <span className="dot" aria-hidden="true" /> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <form className="bookingForm" onSubmit={onSubmit} aria-label="Booking form">
-        <div className="formHeader">
-          <p className="formTitle">Request a booking</p>
-          <p className="muted formSub">
-            Pick a date, add your details, and we’ll get back to confirm.
-          </p>
-        </div>
-
-        <div className="formGrid">
-          <label className="field">
-            <span className="fieldLabel">Date</span>
-            <input
-              className="input"
-              type="date"
-              value={selectedISO}
-              onChange={(e) => onDateInput(e.target.value)}
-            />
-            {selectedDate ? (
-              <span className="fieldHint">
-                Selected:{" "}
-                {selectedDate.toLocaleDateString("en-GB", {
-                  weekday: "short",
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </span>
-            ) : (
-              <span className="fieldHint">Choose a date from the calendar.</span>
-            )}
-          </label>
-
-          <label className="field">
-            <span className="fieldLabel">Name</span>
-            <input
-              className="input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-              placeholder="Your name"
-              required
-            />
-          </label>
-
-          <label className="field">
-            <span className="fieldLabel">Email</span>
-            <input
-              className="input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              placeholder="you@email.com"
-              required
-            />
-          </label>
-
-          <label className="field">
-            <span className="fieldLabel">Event type</span>
-            <input
-              className="input"
-              value={eventType}
-              onChange={(e) => setEventType(e.target.value)}
-              placeholder="Wedding / party / corporate…"
-            />
-          </label>
-
-          <label className="field">
-            <span className="fieldLabel">Location</span>
-            <input
-              className="input"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Town / venue"
-            />
-          </label>
-
-          <label className="field fieldFull">
-            <span className="fieldLabel">Message</span>
-            <textarea
-              className="textarea"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={5}
-              placeholder="Tell us about timings, guest count, dancefloor space, and any special requests."
-            />
-          </label>
-        </div>
-
-        {notice ? <p className="formNotice">{notice}</p> : null}
-
-        <div className="formActions">
-          <button type="submit" className="btn btnPrimary">
-            Send enquiry
-          </button>
-          <a className="textLink" href="mailto:info@skaraceilidh.com">
-            Or email info@skaraceilidh.com
-          </a>
-        </div>
-      </form>
+      <BookingsEnquiryForm
+        form={form}
+        notice={notice}
+        selectedDate={selectedDate}
+        selectedISO={selectedISO}
+        onDateInput={onDateInput}
+        onSubmit={onSubmit}
+        onUpdateField={updateField}
+      />
     </div>
   );
 }

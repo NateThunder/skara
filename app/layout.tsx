@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
+import "./styles/components/SiteNav.css";
 
 const sans = Inter({
   subsets: ["latin"],

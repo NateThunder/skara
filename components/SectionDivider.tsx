@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 type SectionDividerProps = {
   count?: number;
   mobileCount?: number;
@@ -13,13 +11,9 @@ function clampCount(value: number | undefined, fallback: number) {
 
 function DividerSvg() {
   return (
-    <Image
-      src="/media/lines.png"
-      alt=""
+    <div
+      className="h-px w-full bg-gradient-to-r from-transparent via-[rgba(200,163,91,0.58)] to-transparent"
       aria-hidden
-      width={1043}
-      height={194}
-      className="block h-auto w-full"
     />
   );
 }

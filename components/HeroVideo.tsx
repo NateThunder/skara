@@ -43,10 +43,7 @@ export default function HeroVideo({ src, poster }: HeroVideoProps) {
 
     const nextMuted = !muted;
     video.muted = nextMuted;
-    if (!nextMuted) video.volume = 0.9;
     setMuted(nextMuted);
-
-    if (video.paused) void video.play().catch(() => {});
   }
 
   return (
@@ -96,7 +93,7 @@ export default function HeroVideo({ src, poster }: HeroVideoProps) {
             </>
           )}
         </svg>
-        <span className="muteToggleLabel">{muted ? "Sound off" : "Sound on"}</span>
+        {muted ? "Sound off" : "Sound on"}
       </button>
     </div>
   );

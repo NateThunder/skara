@@ -1,15 +1,26 @@
+import type { ReactNode } from "react";
+
 import AboutSection from "@/components/AboutSection";
 import BookingsWidget from "@/components/BookingsWidget";
 import Hero from "@/components/Hero";
 import SectionDivider from "@/components/SectionDivider";
-import ThistleMotif from "@/components/ThistleMotif";
 import WatchSection from "@/components/WatchSection";
 import availability from "@/data/availability.json";
+import { BENEFITS, FOOTER_LINKS, MENTIONS } from "@/data/homeContent";
+
+const SEAM_DIVIDER_CLASS =
+  "pointer-events-none absolute top-0 left-1/2 z-20 w-full -translate-x-1/2 -translate-y-1/2 px-2";
+
+function SectionWithDivider({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative">
+      <SectionDivider count={2} mobileCount={1} className={SEAM_DIVIDER_CLASS} />
+      {children}
+    </div>
+  );
+}
 
 export default function Home() {
-  const seamDividerClass =
-    "pointer-events-none absolute top-0 left-1/2 z-20 w-full -translate-x-1/2 -translate-y-1/2 px-2";
-
   return (
     <>
       <Hero />
@@ -17,13 +28,7 @@ export default function Home() {
       <main className="main">
         <AboutSection />
 
-        <div className="relative">
-          <SectionDivider
-            count={2}
-            mobileCount={1}
-            className={seamDividerClass}
-          />
-
+        <SectionWithDivider>
           <section className="section sectionAlt" id="benefits">
             <div className="container">
               <div className="sectionHeader">
@@ -36,48 +41,22 @@ export default function Home() {
               </div>
 
               <div className="cards">
-                <article className="card">
-                  <h3 className="h3">Dancefloor energy</h3>
-                  <p className="muted">
-                    Lively sets that keep people moving from first circle to
-                    last chorus.
-                  </p>
-                </article>
-                <article className="card">
-                  <h3 className="h3">Crisp sound, any room</h3>
-                  <p className="muted">
-                    A clean mix and confident delivery that fits both intimate
-                    spaces and big venues.
-                  </p>
-                </article>
-                <article className="card">
-                  <h3 className="h3">Easy to book</h3>
-                  <p className="muted">
-                    Check availability, share your details, and we will confirm
-                    the plan quickly.
-                  </p>
-                </article>
+                {BENEFITS.map((item) => (
+                  <article key={item.title} className="card">
+                    <h3 className="h3">{item.title}</h3>
+                    <p className="muted">{item.description}</p>
+                  </article>
+                ))}
               </div>
             </div>
           </section>
-        </div>
+        </SectionWithDivider>
 
-        <div className="relative">
-          <SectionDivider
-            count={2}
-            mobileCount={1}
-            className={seamDividerClass}
-          />
+        <SectionWithDivider>
           <WatchSection />
-        </div>
+        </SectionWithDivider>
 
-        <div className="relative">
-          <SectionDivider
-            count={2}
-            mobileCount={1}
-            className={seamDividerClass}
-          />
-
+        <SectionWithDivider>
           <section className="section sectionAlt" id="mentions">
             <div className="container">
               <div className="sectionHeader">
@@ -89,58 +68,22 @@ export default function Home() {
               </div>
 
               <div className="quotes">
-                <figure className="quote">
-                  <blockquote>
-                    "Kept them up and dancing for hours!"
-                  </blockquote>
-                  <figcaption>
-                    <a
-                      href="https://www.siobhanamyphotography.com/christina-iain-glenapp-castle-wedding/"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Siobhan Amy Photography
-                    </a>
-                  </figcaption>
-                </figure>
-                <figure className="quote">
-                  <blockquote>"A really good ceilidh dance band."</blockquote>
-                  <figcaption>
-                    <a
-                      href="https://www.cluarantonn.com/scottish-digest/campbeltown/"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Cluarantonn (Scottish Digest)
-                    </a>
-                  </figcaption>
-                </figure>
-                <figure className="quote">
-                  <blockquote>
-                    "Live ceilidh music ... to keep you dancing all night."
-                  </blockquote>
-                  <figcaption>
-                    <a
-                      href="https://www.perth-races.co.uk/fixture-Hogmanay-Hoolie-2025-id274"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Perth Racecourse (Hogmanay Hoolie)
-                    </a>
-                  </figcaption>
-                </figure>
+                {MENTIONS.map((item) => (
+                  <figure key={item.href} className="quote">
+                    <blockquote>{item.quote}</blockquote>
+                    <figcaption>
+                      <a href={item.href} target="_blank" rel="noreferrer">
+                        {item.label}
+                      </a>
+                    </figcaption>
+                  </figure>
+                ))}
               </div>
             </div>
           </section>
-        </div>
+        </SectionWithDivider>
 
-        <div className="relative">
-          <SectionDivider
-            count={2}
-            mobileCount={1}
-            className={seamDividerClass}
-          />
-
+        <SectionWithDivider>
           <section className="section" id="bookings">
             <div className="container">
               <div className="sectionHeader">
@@ -154,10 +97,8 @@ export default function Home() {
 
               <BookingsWidget availability={availability} />
             </div>
-
-            <ThistleMotif className="motif motifBookings" />
           </section>
-        </div>
+        </SectionWithDivider>
       </main>
 
       <footer className="footer" id="contact">
@@ -175,25 +116,17 @@ export default function Home() {
           </div>
 
           <div className="footerRight" aria-label="Links">
-            <a
-              className="footerLink"
-              href="https://www.facebook.com/skaraceilidhband/?locale=en_GB"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Facebook
-            </a>
-            <a
-              className="footerLink"
-              href="https://www.youtube.com/@skaraceilidhband2929"
-              target="_blank"
-              rel="noreferrer"
-            >
-              YouTube
-            </a>
-            <a className="footerLink" href="#top">
-              Back to top
-            </a>
+            {FOOTER_LINKS.map((link) => (
+              <a
+                key={link.href}
+                className="footerLink"
+                href={link.href}
+                target={link.href.startsWith("http") ? "_blank" : undefined}
+                rel={link.href.startsWith("http") ? "noreferrer" : undefined}
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
         </div>
       </footer>
