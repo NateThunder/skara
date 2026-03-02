@@ -6,10 +6,10 @@ export default function AboutSection() {
   return (
     <section className={styles.section} id="about">
       <div className={`container ${styles.layout}`}>
-        <div className={styles.text}>
-          <p className={styles.eyebrow}>About</p>
-          <h2 className={styles.title}>Traditional roots. Modern lift.</h2>
-          <p className={styles.copy}>
+        <div className={`${styles.text} sectionHeader`}>
+          <p className="eyebrow">About</p>
+          <h2 className="h2">Traditional roots. Modern lift.</h2>
+          <p className="muted">
             Skara is a four-piece ceilidh line-up blending fiddle, pipes,
             guitar and drums into a polished live sound that keeps dance floors
             moving.
