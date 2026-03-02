@@ -9,7 +9,7 @@ type SiteNavProps = {
 
 const NAV_COLLAPSE_WIDTH = 1100;
 
-export default function SiteNav({ solidFrom = 8 }: SiteNavProps) {
+export default function SiteNav({ solidFrom = 20 }: SiteNavProps) {
   const [solid, setSolid] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
