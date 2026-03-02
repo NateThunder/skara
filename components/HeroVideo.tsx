@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 type HeroVideoProps = {
   src: string;
@@ -10,24 +10,6 @@ type HeroVideoProps = {
 export default function HeroVideo({ src, poster }: HeroVideoProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [muted, setMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(true);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-
-    setIsPlaying(!video.paused);
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("pause", handlePause);
-
-    return () => {
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("pause", handlePause);
-    };
-  }, []);
 
   function toggleMute() {
     const video = videoRef.current;
@@ -39,18 +21,6 @@ export default function HeroVideo({ src, poster }: HeroVideoProps) {
     setMuted(nextMuted);
 
     if (video.paused) void video.play().catch(() => {});
-  }
-
-  function togglePlayback() {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      void video.play().catch(() => {});
-      return;
-    }
-
-    video.pause();
   }
 
   return (
@@ -67,16 +37,6 @@ export default function HeroVideo({ src, poster }: HeroVideoProps) {
         preload="metadata"
         aria-label="Skara Ceilidh Band performance video"
       />
-
-      <button
-        type="button"
-        className="btn btnPrimary playToggle"
-        onClick={togglePlayback}
-        aria-pressed={isPlaying}
-        aria-label={isPlaying ? "Pause video" : "Play video"}
-      >
-        <span className="playToggleLabel">{isPlaying ? "Pause" : "Play"}</span>
-      </button>
 
       <button
         type="button"

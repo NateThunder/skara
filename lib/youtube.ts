@@ -10,6 +10,20 @@
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 const DEFAULT_CHANNEL_HANDLE = "skaraceilidhband2929";
 const DEFAULT_VIDEO_LIMIT = 6;
+
+function shouldHideVideo(video: Pick<YouTubeVideo, "title" | "publishedAt">): boolean {
+  const normalizedTitle = video.title.trim().toLowerCase();
+  const publishedDate = video.publishedAt ? new Date(video.publishedAt) : null;
+  const hasTargetDate = publishedDate
+    ? !Number.isNaN(publishedDate.getTime()) &&
+      publishedDate.getUTCFullYear() === 2018 &&
+      publishedDate.getUTCMonth() === 8 &&
+      publishedDate.getUTCDate() === 3
+    : false;
+
+  return normalizedTitle === "skara ceilidh band" && hasTargetDate;
+}
+
 const FALLBACK_VIDEOS: YouTubeVideo[] = [
   {
     id: "fallback-strip-the-willow",
@@ -22,7 +36,7 @@ const FALLBACK_VIDEOS: YouTubeVideo[] = [
 ];
 
 function getFallbackVideos(limit: number): YouTubeVideo[] {
-  return FALLBACK_VIDEOS.slice(0, Math.max(1, limit));
+  return FALLBACK_VIDEOS.filter((video) => !shouldHideVideo(video)).slice(0, Math.max(1, limit));
 }
 
 function getThumbnailUrl(snippet: {
@@ -159,7 +173,8 @@ export async function getYouTubeVideos(options?: {
               item.contentDetails?.videoPublishedAt ?? item.snippet?.publishedAt ?? "",
           } satisfies YouTubeVideo;
         })
-        .filter((video): video is YouTubeVideo => video !== null) ?? []
+        .filter((video): video is YouTubeVideo => video !== null)
+        .filter((video) => !shouldHideVideo(video)) ?? []
     );
   } catch (error) {
     console.error(

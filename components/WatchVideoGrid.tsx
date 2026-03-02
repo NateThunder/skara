@@ -11,54 +11,45 @@ type WatchVideoGridProps = {
 
 export default function WatchVideoGrid({ videos }: WatchVideoGridProps) {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
-
-  const formatDate = (publishedAt: string) => {
-    if (!publishedAt) {
-      return "YouTube";
-    }
-
-    const date = new Date(publishedAt);
-
-    if (Number.isNaN(date.getTime())) {
-      return "YouTube";
-    }
-
-    return date.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
+  const [loadedVideoIds, setLoadedVideoIds] = useState<Record<string, boolean>>({});
 
   return (
     <>
       {videos.map((video) => {
         const isActive = activeVideoId === video.videoId;
+        const isLoaded = Boolean(loadedVideoIds[video.videoId]);
 
         return (
           <article
             key={video.id}
-            className={`mediaCard mediaCardVideo mediaCardVideoTube${isActive ? " isExpanded" : ""}`}
+            className="mediaCard mediaCardVideo mediaCardVideoTube"
           >
             <div className="mediaThumbWrap mediaVideoFrame">
               {isActive ? (
                 <>
+                  {!isLoaded && (
+                    <>
+                      <Image
+                        className="mediaThumb"
+                        src={video.thumbnailUrl}
+                        alt={`Thumbnail for ${video.title}`}
+                        fill
+                        sizes="(max-width: 940px) 100vw, 33vw"
+                      />
+                      <span className="mediaLoadingOverlay" aria-hidden="true" />
+                    </>
+                  )}
                   <iframe
-                    className="mediaPlayer"
+                    className={`mediaPlayer${isLoaded ? " isReady" : ""}`}
                     src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&rel=0`}
                     title={video.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     referrerPolicy="strict-origin-when-cross-origin"
                     allowFullScreen
+                    onLoad={() =>
+                      setLoadedVideoIds((prev) => ({ ...prev, [video.videoId]: true }))
+                    }
                   />
-                  <button
-                    type="button"
-                    className="mediaCloseButton"
-                    onClick={() => setActiveVideoId(null)}
-                    aria-label={`Close ${video.title}`}
-                  >
-                    Close
-                  </button>
                 </>
               ) : (
                 <>
@@ -83,13 +74,6 @@ export default function WatchVideoGrid({ videos }: WatchVideoGridProps) {
             </div>
 
             <span className="mediaTitle">{video.title}</span>
-            <span className="mediaMeta">
-              Skara Ceilidh Band | {formatDate(video.publishedAt)}
-            </span>
-
-            <a href={video.url} target="_blank" rel="noreferrer" className="mediaLink">
-              Watch on YouTube
-            </a>
           </article>
         );
       })}
