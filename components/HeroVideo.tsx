@@ -57,7 +57,6 @@ export default function HeroVideo({ src, poster }: HeroVideoProps) {
         src={src}
         poster={poster}
         autoPlay
-        defaultMuted
         muted={muted}
         loop
         playsInline
