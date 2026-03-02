@@ -62,12 +62,11 @@ export default function WatchVideoGrid({ videos }: WatchVideoGridProps) {
                   />
                   <button
                     type="button"
-                    className="mediaPlayButton"
+                    className="mediaPlayButton mediaPlayButtonTube"
                     onClick={() => setActiveVideoId(video.videoId)}
                     aria-label={`Play ${video.title}`}
                   >
                     <span className="mediaPlayIcon" aria-hidden="true" />
-                    <span>Play</span>
                   </button>
                 </>
               )}
